@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"runtime"
@@ -12,8 +13,10 @@ import (
 )
 
 type ApiResp struct {
-	Count    int64 `json:"count"`
-	UnixTime int64 `json:"unix_time"`
+	Count    int64  `json:"count"`
+	Hostname string `json:"hostname"`
+	IP       string `json:"ip"`
+	UnixTime int64  `json:"unix_time"`
 }
 
 var (
@@ -32,11 +35,32 @@ func init() {
 	}
 }
 
+// GetLocalIP returns the non loopback local IP of the host
+// source: https://stackoverflow.com/a/31551220
+func GetLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
+}
+
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	COUNT++
 
+	HOSTNAME, _ := os.Hostname()
 	resp := ApiResp{
 		Count:    COUNT,
+		Hostname: HOSTNAME,
+		IP:       GetLocalIP(),
 		UnixTime: time.Now().Unix(),
 	}
 	b, _ := json.Marshal(resp)
