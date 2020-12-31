@@ -1,2 +1,2 @@
 # lb-dummy-app
-Dummy app for testing load balancer
+Dummy app for testing load balancer with `Golang`
